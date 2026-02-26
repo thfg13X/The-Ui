@@ -1540,6 +1540,8 @@ function multihubx:createwindow(config)
             ctxlayout.SortOrder = Enum.SortOrder.LayoutOrder
             ctxlayout.Parent = ctxmenu
 
+            local ctxjustopened = false
+
             local function closectx()
                 tweenservice:Create(ctxmenu, TweenInfo.new(0.1), {Size = UDim2.new(0,130,0,0)}):Play()
                 task.wait(0.1); ctxmenu.Visible = false
@@ -1577,13 +1579,15 @@ function multihubx:createwindow(config)
                 ctxmenu.Position = UDim2.new(0, ap.X, 0, ap.Y + 24)
                 ctxmenu.Visible = true
                 ctxmenu.Size = UDim2.new(0, 130, 0, 0)
+                ctxjustopened = true
                 tweenservice:Create(ctxmenu, TweenInfo.new(0.1), {Size = UDim2.new(0,130,0,52)}):Play()
             end)
 
-            -- close ctx when clicking elsewhere
-            screengui.InputBegan:Connect(function(inp)
+            -- close ctx when clicking elsewhere (not on the menu itself)
+            uis.InputBegan:Connect(function(inp)
                 if ctxmenu.Visible and inp.UserInputType == Enum.UserInputType.MouseButton1 then
-                    task.wait(0.05); closectx()
+                    if ctxjustopened then ctxjustopened = false; return end
+                    closectx()
                 end
             end)
 
