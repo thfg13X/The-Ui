@@ -81,6 +81,7 @@ function multihubx:createwindow(config)
     kbfloat.BackgroundColor3 = DARK
     kbfloat.BorderSizePixel = 0
     kbfloat.ZIndex = 30
+    kbfloat.Visible = false
     kbfloat.Parent = screengui
 
     local kbfloatstroke = Instance.new("UIStroke")
@@ -465,6 +466,15 @@ function multihubx:createwindow(config)
     local closebtn = maketitlebtn("x", -32, Color3.fromRGB(150, 20, 20))
     local minbtn   = maketitlebtn("-", -64, GREY7)
 
+    local kbtogbtn = maketitlebtn("kb", -96, GREY7)
+    kbtogbtn.TextSize = 10
+    local kbpanelopen = false
+    kbtogbtn.MouseButton1Click:Connect(function()
+        kbpanelopen = not kbpanelopen
+        kbfloat.Visible = kbpanelopen
+        kbtogbtn.BackgroundColor3 = kbpanelopen and Color3.fromRGB(30, 10, 10) or GREY7
+    end)
+
     local sep = Instance.new("Frame")
     sep.Size = UDim2.new(1, 0, 0, 1)
     sep.Position = UDim2.new(0, 0, 0, titlebarH)
@@ -650,7 +660,15 @@ function multihubx:createwindow(config)
 
     uis.InputEnded:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-            maindragging = false; minidragging = false; rsdragging = false
+            maindragging = false; minidragging = false
+            if rsdragging then
+                rsdragging = false
+                -- reset moved flag after a tick so click handler fires correctly next time
+                task.delay(0, function() rshasmoved = false end)
+            end
+            if minidragging then
+                task.delay(0, function() minihasmoved = false end)
+            end
         end
     end)
 
@@ -1052,53 +1070,61 @@ function multihubx:createwindow(config)
             local values = cfg.values   or {}
             local cb     = cfg.callback
 
+            -- outer container grows when open
             local container = Instance.new("Frame")
-            container.Size = UDim2.new(1, 0, 0, 30)
+            container.Size = UDim2.new(1, 0, 0, 38)
             container.BackgroundColor3 = DARK3
             container.BorderSizePixel = 0
             container.ClipsDescendants = false
             container.ZIndex = 5
             container.Parent = page
 
+            -- label above the button
             local lbl = Instance.new("TextLabel")
-            lbl.Size = UDim2.new(0.45, 0, 1, 0)
-            lbl.Position = UDim2.new(0, 10, 0, 0)
+            lbl.Size = UDim2.new(1, -10, 0, 16)
+            lbl.Position = UDim2.new(0, 10, 0, 2)
             lbl.BackgroundTransparency = 1
             lbl.Text = txt
-            lbl.TextColor3 = GREY2
-            lbl.TextSize = 12
-            lbl.Font = Enum.Font.Gotham
+            lbl.TextColor3 = GREY1
+            lbl.TextSize = 10
+            lbl.Font = Enum.Font.GothamSemibold
             lbl.TextXAlignment = Enum.TextXAlignment.Left
             lbl.ZIndex = 5
             lbl.Parent = container
 
+            -- full-width button
             local dbtn = Instance.new("TextButton")
-            dbtn.Size = UDim2.new(0.5, -10, 0, 22)
-            dbtn.Position = UDim2.new(0.5, 0, 0, 4)
-            dbtn.BackgroundColor3 = GREY6
-            dbtn.Text = values[1] or "none"
-            dbtn.TextColor3 = GREY2
-            dbtn.TextSize = 11
-            dbtn.Font = Enum.Font.Gotham
+            dbtn.Size = UDim2.new(1, -16, 0, 24)
+            dbtn.Position = UDim2.new(0, 8, 0, 18)
+            dbtn.BackgroundColor3 = DARK4
+            dbtn.Text = (values[1] or "none") .. "  ▾"
+            dbtn.TextColor3 = GREY3
+            dbtn.TextSize = 12
+            dbtn.Font = Enum.Font.GothamSemibold
             dbtn.BorderSizePixel = 0
+            dbtn.AutoButtonColor = false
             dbtn.ZIndex = 6
             dbtn.Parent = container
-            makestroke(GREY7, 1, dbtn)
+            local dbtns = makestroke(accentcolor, 1, dbtn)
+            regaccent(dbtns, "Color")
 
             local ddframe = Instance.new("Frame")
-            ddframe.Size = UDim2.new(0.5, -10, 0, 0)
-            ddframe.Position = UDim2.new(0.5, 0, 1, 2)
-            ddframe.BackgroundColor3 = DARK3
+            ddframe.Size = UDim2.new(1, -16, 0, 0)
+            ddframe.Position = UDim2.new(0, 8, 1, 2)
+            ddframe.BackgroundColor3 = DARK4
             ddframe.BorderSizePixel = 0
             ddframe.ZIndex = 10
             ddframe.Visible = false
             ddframe.ClipsDescendants = true
             ddframe.Parent = container
-            Instance.new("UIListLayout", ddframe).SortOrder = Enum.SortOrder.LayoutOrder
+            local ddlayout = Instance.new("UIListLayout")
+            ddlayout.SortOrder = Enum.SortOrder.LayoutOrder
+            ddlayout.Parent = ddframe
             local dds = makestroke(accentcolor, 1, ddframe)
             regaccent(dds, "Color")
 
             local isopen = false
+            local currentval = values[1] or "none"
 
             local function setvalues(vals)
                 for _, c in ipairs(ddframe:GetChildren()) do
@@ -1106,20 +1132,37 @@ function multihubx:createwindow(config)
                 end
                 for _, v in ipairs(vals) do
                     local opt = Instance.new("TextButton")
-                    opt.Size = UDim2.new(1, 0, 0, 22)
-                    opt.BackgroundColor3 = GREY6
+                    opt.Size = UDim2.new(1, 0, 0, 26)
+                    opt.BackgroundColor3 = DARK4
                     opt.Text = v
-                    opt.TextColor3 = GREY2
-                    opt.TextSize = 11
+                    opt.TextColor3 = v == currentval and accentcolor or GREY2
+                    opt.TextSize = 12
                     opt.Font = Enum.Font.Gotham
                     opt.BorderSizePixel = 0
+                    opt.AutoButtonColor = false
                     opt.ZIndex = 11
                     opt.Parent = ddframe
+                    opt.MouseEnter:Connect(function()
+                        if opt.Text ~= currentval then
+                            opt.BackgroundColor3 = GREY6
+                        end
+                    end)
+                    opt.MouseLeave:Connect(function()
+                        opt.BackgroundColor3 = DARK4
+                    end)
                     opt.MouseButton1Click:Connect(function()
-                        dbtn.Text = v; isopen = false
-                        tweenservice:Create(ddframe, TweenInfo.new(0.15), { Size = UDim2.new(0.5,-10,0,0) }):Play()
-                        task.wait(0.15); ddframe.Visible = false
-                        container.Size = UDim2.new(1, 0, 0, 30)
+                        currentval = v
+                        dbtn.Text = v .. "  ▾"
+                        isopen = false
+                        tweenservice:Create(ddframe, TweenInfo.new(0.12), { Size = UDim2.new(1,-16,0,0) }):Play()
+                        task.wait(0.12); ddframe.Visible = false
+                        container.Size = UDim2.new(1, 0, 0, 38)
+                        -- refresh active color on all opts
+                        for _, c2 in ipairs(ddframe:GetChildren()) do
+                            if c2:IsA("TextButton") then
+                                c2.TextColor3 = c2.Text == currentval and accentcolor or GREY2
+                            end
+                        end
                         if cb then cb(v) end
                     end)
                 end
@@ -1130,15 +1173,18 @@ function multihubx:createwindow(config)
             dbtn.MouseButton1Click:Connect(function()
                 isopen = not isopen
                 if isopen then
-                    local cnt = #ddframe:GetChildren() - 1
+                    local cnt = #values
+                    local totalH = cnt * 26
                     ddframe.Visible = true
-                    ddframe.Size = UDim2.new(0.5,-10,0,0)
-                    tweenservice:Create(ddframe, TweenInfo.new(0.15), { Size = UDim2.new(0.5,-10,0,cnt*22) }):Play()
-                    container.Size = UDim2.new(1, 0, 0, 30 + cnt*22 + 2)
+                    ddframe.Size = UDim2.new(1,-16,0,0)
+                    tweenservice:Create(ddframe, TweenInfo.new(0.12), { Size = UDim2.new(1,-16,0,totalH) }):Play()
+                    container.Size = UDim2.new(1, 0, 0, 38 + totalH + 4)
+                    dbtn.Text = currentval .. "  ▴"
                 else
-                    tweenservice:Create(ddframe, TweenInfo.new(0.15), { Size = UDim2.new(0.5,-10,0,0) }):Play()
-                    task.wait(0.15); ddframe.Visible = false
-                    container.Size = UDim2.new(1, 0, 0, 30)
+                    tweenservice:Create(ddframe, TweenInfo.new(0.12), { Size = UDim2.new(1,-16,0,0) }):Play()
+                    task.wait(0.12); ddframe.Visible = false
+                    container.Size = UDim2.new(1, 0, 0, 38)
+                    dbtn.Text = currentval .. "  ▾"
                 end
             end)
 
@@ -1375,7 +1421,7 @@ function multihubx:createwindow(config)
 
             uis.InputChanged:Connect(function(inp)
                 if inp.UserInputType ~= Enum.UserInputType.MouseMovement then return end
-                if not dragmode then return end
+                if not dragmode or not popup.Visible then return end
                 local mpos = uis:GetMouseLocation()
                 if dragmode == "sv" then
                     local rel = mpos - canvas.AbsolutePosition
@@ -1392,6 +1438,16 @@ function multihubx:createwindow(config)
                     applycolor()
                 end
             end)
+            -- clear drag on mouse release, but only when this picker owns the drag
+            local function clearDragIfOwned(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 and dragmode ~= nil then
+                    dragmode = nil
+                end
+            end
+            popup.InputEnded:Connect(clearDragIfOwned)
+            canvas.InputEnded:Connect(clearDragIfOwned)
+            huebar.InputEnded:Connect(clearDragIfOwned)
+            brightbar.InputEnded:Connect(clearDragIfOwned)
             uis.InputEnded:Connect(function(inp)
                 if inp.UserInputType == Enum.UserInputType.MouseButton1 then
                     dragmode = nil
