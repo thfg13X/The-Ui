@@ -580,18 +580,10 @@ function multihubx:createwindow(config)
     minihitbox.InputEnded:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 then minidragging = false end
     end)
-    minihitbox.MouseButton1Click:Connect(function()
-        if not minihasmoved then showgui() end
-    end)
-    restorebtn.MouseButton1Click:Connect(function()
-        if not rshasmoved then showgui() end
-    end)
-
     local function collapse()
         mainframe.Visible = false
         miniwidget.Visible = true
         restorestrip.Visible = true
-        -- hide blur when GUI is hidden
         if blurenabled then
             tweenservice:Create(blureffect, TweenInfo.new(0.25), { Size = 0 }):Play()
             task.delay(0.25, function() blureffect.Enabled = false end)
@@ -602,13 +594,19 @@ function multihubx:createwindow(config)
         miniwidget.Visible = false
         restorestrip.Visible = false
         mainframe.Visible = true
-        -- show blur when GUI opens
         if blurenabled then
             blureffect.Size = 0
             blureffect.Enabled = true
             tweenservice:Create(blureffect, TweenInfo.new(0.25), { Size = blurintensity }):Play()
         end
     end
+
+    minihitbox.MouseButton1Click:Connect(function()
+        if not minihasmoved then showgui() end
+    end)
+    restorebtn.MouseButton1Click:Connect(function()
+        if not rshasmoved then showgui() end
+    end)
 
     closebtn.MouseButton1Click:Connect(collapse)
     minbtn.MouseButton1Click:Connect(collapse)
@@ -1346,62 +1344,58 @@ function multihubx:createwindow(config)
                 if popup.Visible then popup.Visible = false else openPopup() end
             end)
 
-            -- SV canvas drag
-            local svdrag = false
+            -- single drag state: "sv", "hue", "bright", or nil
+            local dragmode = nil
+
             canvas.InputBegan:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 then svdrag = true
-                    local rel = inp.Position - canvas.AbsolutePosition
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragmode = "sv"
+                    local rel = uis:GetMouseLocation() - canvas.AbsolutePosition
                     s = math.clamp(rel.X / canvas.AbsoluteSize.X, 0, 1)
                     v = 1 - math.clamp(rel.Y / canvas.AbsoluteSize.Y, 0, 1)
                     applycolor()
                 end
             end)
-            uis.InputEnded:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 then svdrag = false end
-            end)
-            uis.InputChanged:Connect(function(inp)
-                if svdrag and inp.UserInputType == Enum.UserInputType.MouseMovement then
-                    local rel = inp.Position - canvas.AbsolutePosition
-                    s = math.clamp(rel.X / canvas.AbsoluteSize.X, 0, 1)
-                    v = 1 - math.clamp(rel.Y / canvas.AbsoluteSize.Y, 0, 1)
-                    applycolor()
-                end
-            end)
-
-            -- hue bar drag
-            local huedrag = false
             huebar.InputBegan:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 then huedrag = true
-                    h = math.clamp((inp.Position.X - huebar.AbsolutePosition.X) / huebar.AbsoluteSize.X, 0, 1)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragmode = "hue"
+                    local rel = uis:GetMouseLocation() - huebar.AbsolutePosition
+                    h = math.clamp(rel.X / huebar.AbsoluteSize.X, 0, 1)
                     applycolor()
                 end
             end)
-            uis.InputChanged:Connect(function(inp)
-                if huedrag and inp.UserInputType == Enum.UserInputType.MouseMovement then
-                    h = math.clamp((inp.Position.X - huebar.AbsolutePosition.X) / huebar.AbsoluteSize.X, 0, 1)
+            brightbar.InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragmode = "bright"
+                    local rel = uis:GetMouseLocation() - brightbar.AbsolutePosition
+                    v = math.clamp(rel.X / brightbar.AbsoluteSize.X, 0, 1)
                     applycolor()
                 end
-            end)
-            uis.InputEnded:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 then huedrag = false end
             end)
 
-            -- brightness bar drag
-            local brightdrag = false
-            brightbar.InputBegan:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 then brightdrag = true
-                    v = math.clamp((inp.Position.X - brightbar.AbsolutePosition.X) / brightbar.AbsoluteSize.X, 0, 1)
-                    applycolor()
-                end
-            end)
             uis.InputChanged:Connect(function(inp)
-                if brightdrag and inp.UserInputType == Enum.UserInputType.MouseMovement then
-                    v = math.clamp((inp.Position.X - brightbar.AbsolutePosition.X) / brightbar.AbsoluteSize.X, 0, 1)
+                if inp.UserInputType ~= Enum.UserInputType.MouseMovement then return end
+                if not dragmode then return end
+                local mpos = uis:GetMouseLocation()
+                if dragmode == "sv" then
+                    local rel = mpos - canvas.AbsolutePosition
+                    s = math.clamp(rel.X / canvas.AbsoluteSize.X, 0, 1)
+                    v = 1 - math.clamp(rel.Y / canvas.AbsoluteSize.Y, 0, 1)
+                    applycolor()
+                elseif dragmode == "hue" then
+                    local rel = mpos - huebar.AbsolutePosition
+                    h = math.clamp(rel.X / huebar.AbsoluteSize.X, 0, 1)
+                    applycolor()
+                elseif dragmode == "bright" then
+                    local rel = mpos - brightbar.AbsolutePosition
+                    v = math.clamp(rel.X / brightbar.AbsoluteSize.X, 0, 1)
                     applycolor()
                 end
             end)
             uis.InputEnded:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 then brightdrag = false end
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragmode = nil
+                end
             end)
 
             -- hex input
