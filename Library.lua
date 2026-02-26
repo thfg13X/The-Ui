@@ -1099,15 +1099,17 @@ function multihubx:createwindow(config)
             local dbtns = makestroke(accentcolor, 1, dbtn)
             regaccent(dbtns, "Color")
 
+            -- dropdown list is parented directly to screengui so it is never
+            -- clipped by the scrolling content area or any parent frame
             local ddframe = Instance.new("Frame")
-            ddframe.Size = UDim2.new(1, -16, 0, 0)
-            ddframe.Position = UDim2.new(0, 8, 1, 2)
             ddframe.BackgroundColor3 = DARK4
             ddframe.BorderSizePixel = 0
-            ddframe.ZIndex = 10
+            ddframe.ZIndex = 200
             ddframe.Visible = false
             ddframe.ClipsDescendants = true
-            ddframe.Parent = container
+            ddframe.Size = UDim2.new(0, 0, 0, 0)       -- set in px on open
+            ddframe.Position = UDim2.new(0, 0, 0, 0)    -- set in px on open
+            ddframe.Parent = screengui
             local ddlayout = Instance.new("UIListLayout")
             ddlayout.SortOrder = Enum.SortOrder.LayoutOrder
             ddlayout.Parent = ddframe
@@ -1116,8 +1118,17 @@ function multihubx:createwindow(config)
 
             local isopen = false
             local currentval = values[1] or "none"
+            local currentvals = values  -- keep a reference for cnt on open
+
+            local function closeDropdown()
+                isopen = false
+                tweenservice:Create(ddframe, TweenInfo.new(0.12), { Size = UDim2.new(0, ddframe.AbsoluteSize.X, 0, 0) }):Play()
+                task.delay(0.12, function() ddframe.Visible = false end)
+                dbtn.Text = currentval .. "  ▾"
+            end
 
             local function setvalues(vals)
+                currentvals = vals
                 for _, c in ipairs(ddframe:GetChildren()) do
                     if c:IsA("TextButton") then c:Destroy() end
                 end
@@ -1131,12 +1142,10 @@ function multihubx:createwindow(config)
                     opt.Font = Enum.Font.Gotham
                     opt.BorderSizePixel = 0
                     opt.AutoButtonColor = false
-                    opt.ZIndex = 11
+                    opt.ZIndex = 201
                     opt.Parent = ddframe
                     opt.MouseEnter:Connect(function()
-                        if opt.Text ~= currentval then
-                            opt.BackgroundColor3 = GREY6
-                        end
+                        if opt.Text ~= currentval then opt.BackgroundColor3 = GREY6 end
                     end)
                     opt.MouseLeave:Connect(function()
                         opt.BackgroundColor3 = DARK4
@@ -1144,16 +1153,12 @@ function multihubx:createwindow(config)
                     opt.MouseButton1Click:Connect(function()
                         currentval = v
                         dbtn.Text = v .. "  ▾"
-                        isopen = false
-                        tweenservice:Create(ddframe, TweenInfo.new(0.12), { Size = UDim2.new(1,-16,0,0) }):Play()
-                        task.wait(0.12); ddframe.Visible = false
-                        container.Size = UDim2.new(1, 0, 0, 38)
-
                         for _, c2 in ipairs(ddframe:GetChildren()) do
                             if c2:IsA("TextButton") then
                                 c2.TextColor3 = c2.Text == currentval and accentcolor or GREY2
                             end
                         end
+                        closeDropdown()
                         if cb then cb(v) end
                     end)
                 end
@@ -1164,18 +1169,33 @@ function multihubx:createwindow(config)
             dbtn.MouseButton1Click:Connect(function()
                 isopen = not isopen
                 if isopen then
-                    local cnt = #values
-                    local totalH = cnt * 26
+                    -- reposition the floating frame to sit just below the button
+                    local ap = dbtn.AbsolutePosition
+                    local as = dbtn.AbsoluteSize
+                    local totalH = math.min(#currentvals, 8) * 26  -- cap at 8 visible items
+                    ddframe.Position = UDim2.new(0, ap.X, 0, ap.Y + as.Y + 2)
+                    ddframe.Size = UDim2.new(0, as.X, 0, 0)
                     ddframe.Visible = true
-                    ddframe.Size = UDim2.new(1,-16,0,0)
-                    tweenservice:Create(ddframe, TweenInfo.new(0.12), { Size = UDim2.new(1,-16,0,totalH) }):Play()
-                    container.Size = UDim2.new(1, 0, 0, 38 + totalH + 4)
+                    tweenservice:Create(ddframe, TweenInfo.new(0.12), { Size = UDim2.new(0, as.X, 0, totalH) }):Play()
                     dbtn.Text = currentval .. "  ▴"
                 else
-                    tweenservice:Create(ddframe, TweenInfo.new(0.12), { Size = UDim2.new(1,-16,0,0) }):Play()
-                    task.wait(0.12); ddframe.Visible = false
-                    container.Size = UDim2.new(1, 0, 0, 38)
-                    dbtn.Text = currentval .. "  ▾"
+                    closeDropdown()
+                end
+            end)
+
+            -- close if user clicks outside
+            game:GetService("UserInputService").InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 and isopen then
+                    local mx, my = inp.Position.X, inp.Position.Y
+                    local ap = ddframe.AbsolutePosition
+                    local as = ddframe.AbsoluteSize
+                    local inDD = mx >= ap.X and mx <= ap.X + as.X and my >= ap.Y and my <= ap.Y + as.Y
+                    local bap = dbtn.AbsolutePosition
+                    local bas = dbtn.AbsoluteSize
+                    local inBtn = mx >= bap.X and mx <= bap.X + bas.X and my >= bap.Y and my <= bap.Y + bas.Y
+                    if not inDD and not inBtn then
+                        closeDropdown()
+                    end
                 end
             end)
 
