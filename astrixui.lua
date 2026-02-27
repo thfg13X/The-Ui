@@ -89,7 +89,6 @@ function astrixhub:createwindow(config)
 
     local kbfloatstroke = Instance.new("UIStroke")
     kbfloatstroke.Color = accentcolor; kbfloatstroke.Thickness = 1; kbfloatstroke.Parent = kbfloat
-    regaccent(kbfloatstroke, "Color")
 
     local kbfloatherbar = Instance.new("Frame")
     kbfloatherbar.Size = UDim2.new(1, 0, 0, 22)
@@ -105,7 +104,6 @@ function astrixhub:createwindow(config)
     kbfloatherlbl.TextSize = 11; kbfloatherlbl.Font = Enum.Font.GothamBold
     kbfloatherlbl.TextXAlignment = Enum.TextXAlignment.Left
     kbfloatherlbl.ZIndex = 32; kbfloatherlbl.Parent = kbfloatherbar
-    regaccent(kbfloatherlbl, "TextColor3")
 
     local kbfloatlist = Instance.new("Frame")
     kbfloatlist.Size = UDim2.new(1, 0, 1, -22)
