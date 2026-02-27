@@ -691,7 +691,7 @@ function astrixhub:createwindow(config)
     end)
 
     uis.InputBegan:Connect(function(inp, gpe)
-        if listeningforkey and inp.UserInputType == Enum.UserInputType.Keyboard then
+        if listeningforkey and not gpe and inp.UserInputType == Enum.UserInputType.Keyboard then
             listeningforkey = false
             currenttogglekey = inp.KeyCode
             return
@@ -1674,7 +1674,8 @@ function astrixhub:createwindow(config)
                     kbtn.TextColor3 = accentcolor
                 end)
 
-                uis.InputBegan:Connect(function(inp)
+                uis.InputBegan:Connect(function(inp, gpe)
+                    if gpe then return end
                     if listeningkb and inp.UserInputType == Enum.UserInputType.Keyboard then
                         listeningkb = false
                         currentkey = inp.KeyCode
@@ -1943,7 +1944,8 @@ function astrixhub:createwindow(config)
                 kbtn.MouseButton1Click:Connect(function()
                     listeningforkey = true; kbtn.Text = "[ ... ]"; kbtn.TextColor3 = accentcolor
                 end)
-                uis.InputBegan:Connect(function(inp)
+                uis.InputBegan:Connect(function(inp, gpe)
+                    if gpe then return end
                     if listeningforkey and inp.UserInputType == Enum.UserInputType.Keyboard then
                         listeningforkey = false
                         currenttogglekey = inp.KeyCode
