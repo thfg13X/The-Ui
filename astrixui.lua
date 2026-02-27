@@ -72,118 +72,9 @@ function astrixhub:createwindow(config)
     local keybindregistry = {}
     local notifstack     = {}
 
-    -- ── keybind float panel ──────────────────────────────────────────────────────
-    local kbfloat = Instance.new("Frame")
-    kbfloat.Name = "keybindpanel"
-    kbfloat.Size = UDim2.new(0, 200, 0, 28)
-    kbfloat.Position = UDim2.new(1, -210, 0.5, -80)
-    kbfloat.BackgroundColor3 = DARK
-    kbfloat.BorderSizePixel = 0
-    kbfloat.ZIndex = 30
-    kbfloat.Visible = false
-    kbfloat.Parent = screengui
-    makecorner(UDim.new(0, 8), kbfloat)
+    -- keybind float panel removed (keybinds shown via addkeybindlist toggle in settings)
 
-    local kbfloatstroke = Instance.new("UIStroke")
-    kbfloatstroke.Color = accentcolor; kbfloatstroke.Thickness = 1; kbfloatstroke.Parent = kbfloat
 
-    local kbfloatherbar = Instance.new("Frame")
-    kbfloatherbar.Size = UDim2.new(1, 0, 0, 22)
-    kbfloatherbar.BackgroundColor3 = DARK5
-    kbfloatherbar.BorderSizePixel = 0; kbfloatherbar.ZIndex = 31; kbfloatherbar.Parent = kbfloat
-    makecorner(UDim.new(0, 8), kbfloatherbar)
-
-    local kbfloatherlbl = Instance.new("TextLabel")
-    kbfloatherlbl.Size = UDim2.new(1, -8, 1, 0)
-    kbfloatherlbl.Position = UDim2.new(0, 6, 0, 0)
-    kbfloatherlbl.BackgroundTransparency = 1; kbfloatherlbl.Text = "keybinds"
-    kbfloatherlbl.TextColor3 = accentcolor
-    kbfloatherlbl.TextSize = 11; kbfloatherlbl.Font = Enum.Font.GothamBold
-    kbfloatherlbl.TextXAlignment = Enum.TextXAlignment.Left
-    kbfloatherlbl.ZIndex = 32; kbfloatherlbl.Parent = kbfloatherbar
-
-    local kbfloatlist = Instance.new("Frame")
-    kbfloatlist.Size = UDim2.new(1, 0, 1, -22)
-    kbfloatlist.Position = UDim2.new(0, 0, 0, 22)
-    kbfloatlist.BackgroundTransparency = 1; kbfloatlist.BorderSizePixel = 0
-    kbfloatlist.ZIndex = 31; kbfloatlist.Parent = kbfloat
-
-    local kbfloatlayout = Instance.new("UIListLayout")
-    kbfloatlayout.SortOrder = Enum.SortOrder.LayoutOrder
-    kbfloatlayout.Padding = UDim.new(0, 1); kbfloatlayout.Parent = kbfloatlist
-
-    local kbfloatpad = Instance.new("UIPadding")
-    kbfloatpad.PaddingTop = UDim.new(0, 3); kbfloatpad.PaddingBottom = UDim.new(0, 3)
-    kbfloatpad.PaddingLeft = UDim.new(0, 4); kbfloatpad.PaddingRight = UDim.new(0, 4)
-    kbfloatpad.Parent = kbfloatlist
-
-    local kbfdrag, kbfdragstart, kbfstartpos = false, nil, nil
-    kbfloatherbar.InputBegan:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-            kbfdrag = true; kbfdragstart = inp.Position; kbfstartpos = kbfloat.Position
-        end
-    end)
-    kbfloatherbar.InputEnded:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 then kbfdrag = false end
-    end)
-    uis.InputChanged:Connect(function(inp)
-        if kbfdrag and inp.UserInputType == Enum.UserInputType.MouseMovement then
-            local d = inp.Position - kbfdragstart
-            kbfloat.Position = UDim2.new(kbfstartpos.X.Scale, kbfstartpos.X.Offset + d.X,
-                kbfstartpos.Y.Scale, kbfstartpos.Y.Offset + d.Y)
-        end
-    end)
-    uis.InputEnded:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 then kbfdrag = false end
-    end)
-
-    local kbfrows = {}
-    local function refreshkbfloat()
-        for _, r in ipairs(kbfrows) do r:Destroy() end
-        kbfrows = {}
-        for _, entry in ipairs(keybindregistry) do
-            local r = Instance.new("Frame")
-            r.Size = UDim2.new(1, 0, 0, 20)
-            r.BackgroundTransparency = 1; r.BorderSizePixel = 0
-            r.ZIndex = 32; r.Parent = kbfloatlist
-            table.insert(kbfrows, r)
-
-            local isactive = entry.getstate()
-            local dot = Instance.new("Frame")
-            dot.Size = UDim2.new(0, 7, 0, 7)
-            dot.Position = UDim2.new(0, 0, 0.5, -3)
-            dot.BackgroundColor3 = isactive and accentcolor or GREY5
-            dot.BorderSizePixel = 0; dot.ZIndex = 33; dot.Parent = r
-            Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
-
-            local keylbl = Instance.new("TextLabel")
-            keylbl.Size = UDim2.new(0, 55, 1, 0)
-            keylbl.Position = UDim2.new(0, 12, 0, 0)
-            keylbl.BackgroundTransparency = 1
-            keylbl.Text = "[" .. string.lower(entry.getkey()) .. "]"
-            keylbl.TextColor3 = isactive and accentcolor or GREY1
-            keylbl.TextSize = 10; keylbl.Font = Enum.Font.GothamSemibold
-            keylbl.TextXAlignment = Enum.TextXAlignment.Left
-            keylbl.ZIndex = 33; keylbl.Parent = r
-
-            local namelbl = Instance.new("TextLabel")
-            namelbl.Size = UDim2.new(1, -70, 1, 0)
-            namelbl.Position = UDim2.new(0, 70, 0, 0)
-            namelbl.BackgroundTransparency = 1
-            namelbl.Text = entry.title
-            namelbl.TextColor3 = isactive and GREY3 or GREY1
-            namelbl.TextSize = 10; namelbl.Font = Enum.Font.Gotham
-            namelbl.TextXAlignment = Enum.TextXAlignment.Left
-            namelbl.TextTruncate = Enum.TextTruncate.AtEnd
-            namelbl.ZIndex = 33; namelbl.Parent = r
-        end
-        local cnt = #keybindregistry
-        kbfloat.Size = UDim2.new(0, 200, 0, 22 + math.max(1, cnt) * 21 + 6)
-    end
-
-    task.spawn(function()
-        while screengui.Parent do task.wait(0.25); refreshkbfloat() end
-    end)
 
     local function regaccent(obj, prop)
         table.insert(accentobjs, { obj = obj, prop = prop })
@@ -482,15 +373,6 @@ function astrixhub:createwindow(config)
     local closebtn = maketitlebtn("×", -30, Color3.fromRGB(100, 20, 170))
     local minbtn   = maketitlebtn("−", -60, GREY7)
 
-    local kbtogbtn = maketitlebtn("kb", -92, GREY7)
-    kbtogbtn.TextSize = 10
-    local kbpanelopen = false
-    kbtogbtn.MouseButton1Click:Connect(function()
-        kbpanelopen = not kbpanelopen
-        kbfloat.Visible = kbpanelopen
-        kbtogbtn.BackgroundColor3 = kbpanelopen and Color3.fromRGB(30, 10, 60) or GREY7
-    end)
-
     local sep = Instance.new("Frame")
     sep.Size = UDim2.new(1, 0, 0, 1)
     sep.Position = UDim2.new(0, 0, 0, titlebarH)
@@ -620,7 +502,7 @@ function astrixhub:createwindow(config)
         if not rshasmoved then showgui() end
     end)
 
-    closebtn.MouseButton1Click:Connect(collapse)
+    closebtn.MouseButton1Click:Connect(function() screengui:Destroy() end)
     minbtn.MouseButton1Click:Connect(collapse)
 
     local maindragging, maindragstart, mainstartpos = false, nil, nil
@@ -1679,17 +1561,148 @@ function astrixhub:createwindow(config)
             end
 
             function target:addkeybindlist()
-                -- visual list of all registered keybinds (read-only display)
+                local p = (target._isGroupbox and target._page) or page
+
+                -- toggle row
+                local row = Instance.new("Frame")
+                row.Size = UDim2.new(1, 0, 0, 32)
+                row.BackgroundColor3 = DARK3
+                row.BorderSizePixel = 0
+                row.Parent = p
+                makecorner(UDim.new(0, 6), row)
+
                 local lbl = Instance.new("TextLabel")
-                lbl.Size = UDim2.new(1, 0, 0, 18)
+                lbl.Size = UDim2.new(1, -50, 1, 0)
+                lbl.Position = UDim2.new(0, 10, 0, 0)
                 lbl.BackgroundTransparency = 1
-                lbl.Text = "see keybind panel (kb button)"
-                lbl.TextColor3 = GREY1
-                lbl.TextSize = 11
+                lbl.Text = "show keybinds"
+                lbl.TextColor3 = GREY3
+                lbl.TextSize = 12
                 lbl.Font = Enum.Font.Gotham
                 lbl.TextXAlignment = Enum.TextXAlignment.Left
-                lbl.Parent = (target._isGroupbox and target._page) or page
-                makepad(0, 4, 0, 0, lbl)
+                lbl.Parent = row
+
+                local togbg = Instance.new("Frame")
+                togbg.Size = UDim2.new(0, 36, 0, 18)
+                togbg.Position = UDim2.new(1, -44, 0.5, -9)
+                togbg.BackgroundColor3 = GREY5
+                togbg.BorderSizePixel = 0
+                togbg.Parent = row
+                makecorner(UDim.new(1, 0), togbg)
+
+                local circle = Instance.new("Frame")
+                circle.Size = UDim2.new(0, 12, 0, 12)
+                circle.Position = UDim2.new(0, 3, 0.5, -6)
+                circle.BackgroundColor3 = GREY1
+                circle.BorderSizePixel = 0
+                circle.Parent = togbg
+                makecorner(UDim.new(1, 0), circle)
+
+                -- list container (hidden by default)
+                local listframe = Instance.new("Frame")
+                listframe.Size = UDim2.new(1, 0, 0, 0)
+                listframe.BackgroundColor3 = DARK3
+                listframe.BorderSizePixel = 0
+                listframe.ClipsDescendants = true
+                listframe.Visible = false
+                listframe.Parent = p
+                makecorner(UDim.new(0, 6), listframe)
+
+                local listlayout = Instance.new("UIListLayout")
+                listlayout.SortOrder = Enum.SortOrder.LayoutOrder
+                listlayout.Padding = UDim.new(0, 2)
+                listlayout.Parent = listframe
+                makepad(6, 8, 8, 6, listframe)
+
+                local listopen = false
+
+                local function rebuildlist()
+                    for _, c in ipairs(listframe:GetChildren()) do
+                        if c:IsA("Frame") then c:Destroy() end
+                    end
+                    for _, entry in ipairs(keybindregistry) do
+                        local r = Instance.new("Frame")
+                        r.Size = UDim2.new(1, 0, 0, 22)
+                        r.BackgroundTransparency = 1
+                        r.BorderSizePixel = 0
+                        r.Parent = listframe
+
+                        local isactive = entry.getstate and entry.getstate() or false
+
+                        local dot = Instance.new("Frame")
+                        dot.Size = UDim2.new(0, 7, 0, 7)
+                        dot.Position = UDim2.new(0, 0, 0.5, -3)
+                        dot.BackgroundColor3 = isactive and accentcolor or GREY5
+                        dot.BorderSizePixel = 0
+                        dot.Parent = r
+                        makecorner(UDim.new(1, 0), dot)
+
+                        local keylbl = Instance.new("TextLabel")
+                        keylbl.Size = UDim2.new(0, 60, 1, 0)
+                        keylbl.Position = UDim2.new(0, 14, 0, 0)
+                        keylbl.BackgroundTransparency = 1
+                        keylbl.Text = "[" .. string.lower(entry.getkey()) .. "]"
+                        keylbl.TextColor3 = isactive and accentcolor or GREY1
+                        keylbl.TextSize = 10
+                        keylbl.Font = Enum.Font.GothamSemibold
+                        keylbl.TextXAlignment = Enum.TextXAlignment.Left
+                        keylbl.Parent = r
+
+                        local namelbl = Instance.new("TextLabel")
+                        namelbl.Size = UDim2.new(1, -76, 1, 0)
+                        namelbl.Position = UDim2.new(0, 76, 0, 0)
+                        namelbl.BackgroundTransparency = 1
+                        namelbl.Text = entry.title
+                        namelbl.TextColor3 = isactive and GREY3 or GREY1
+                        namelbl.TextSize = 10
+                        namelbl.Font = Enum.Font.Gotham
+                        namelbl.TextXAlignment = Enum.TextXAlignment.Left
+                        namelbl.TextTruncate = Enum.TextTruncate.AtEnd
+                        namelbl.Parent = r
+                    end
+                    local h = listlayout.AbsoluteContentSize.Y + 12
+                    listframe.Size = UDim2.new(1, 0, 0, h)
+                end
+
+                listlayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                    if listopen then
+                        listframe.Size = UDim2.new(1, 0, 0, listlayout.AbsoluteContentSize.Y + 12)
+                    end
+                end)
+
+                local function settog(v)
+                    listopen = v
+                    tweenservice:Create(circle, TweenInfo.new(0.12), {
+                        Position = v and UDim2.new(1,-15,0.5,-6) or UDim2.new(0,3,0.5,-6)
+                    }):Play()
+                    tweenservice:Create(togbg, TweenInfo.new(0.12), {
+                        BackgroundColor3 = v and accentcolor or GREY5
+                    }):Play()
+                    tweenservice:Create(circle, TweenInfo.new(0.12), {
+                        BackgroundColor3 = v and WHITE or GREY1
+                    }):Play()
+                    if v then
+                        rebuildlist()
+                        listframe.Visible = true
+                    else
+                        listframe.Visible = false
+                    end
+                end
+
+                -- auto-refresh dot colors every 0.25s when open
+                task.spawn(function()
+                    while screengui.Parent do
+                        task.wait(0.25)
+                        if listopen then rebuildlist() end
+                    end
+                end)
+
+                local clickbtn = Instance.new("TextButton")
+                clickbtn.Size = UDim2.new(1, 0, 1, 0)
+                clickbtn.BackgroundTransparency = 1
+                clickbtn.Text = ""
+                clickbtn.Parent = row
+                clickbtn.MouseButton1Click:Connect(function() settog(not listopen) end)
             end
 
             function target:addthemepicker()
