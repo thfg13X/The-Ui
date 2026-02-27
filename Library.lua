@@ -531,30 +531,15 @@ function astrixhub:createwindow(config)
     contentarea.Parent = mainclip
 
     -- ── mini widget / restore ────────────────────────────────────────────────────
+    -- miniwidget kept as invisible dummy so existing logic still references it
     local miniwidget = Instance.new("Frame")
     miniwidget.Name = "miniwidget"
-    miniwidget.Size = UDim2.new(0, 54, 0, 54)
-    miniwidget.Position = UDim2.new(0, 30, 0.5, -27)
-    miniwidget.BackgroundColor3 = DARK
+    miniwidget.Size = UDim2.new(0, 0, 0, 0)
+    miniwidget.BackgroundTransparency = 1
     miniwidget.BorderSizePixel = 0
     miniwidget.Visible = false
     miniwidget.ZIndex = 20
     miniwidget.Parent = screengui
-    makecorner(UDim.new(1, 0), miniwidget)
-    local ministr = makestroke(accentcolor, 2, miniwidget)
-    regaccent(ministr, "Color")
-
-    local minilbl = Instance.new("TextLabel")
-    minilbl.Size = UDim2.new(1, 0, 0.6, 0)
-    minilbl.Position = UDim2.new(0, 0, 0.1, 0)
-    minilbl.BackgroundTransparency = 1
-    minilbl.Text = "a-h"
-    minilbl.TextColor3 = accentcolor
-    minilbl.TextSize = 12
-    minilbl.Font = Enum.Font.GothamBold
-    minilbl.ZIndex = 21
-    minilbl.Parent = miniwidget
-    regaccent(minilbl, "TextColor3")
 
     local restorestrip = Instance.new("Frame")
     restorestrip.Size = UDim2.new(0, 120, 0, 28)
@@ -1956,10 +1941,10 @@ function astrixhub:createwindow(config)
             end
         end
 
-        -- apply element methods to the tab itself
+        
         addElementsTo(tab)
 
-        -- patch addgroupbox so groupboxes also get all element methods
+        
         local origAddGroupbox = tab.addgroupbox
         tab.addgroupbox = function(self, title, collapsed)
             local gb = origAddGroupbox(self, title, collapsed)
